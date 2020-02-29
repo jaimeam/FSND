@@ -32,11 +32,6 @@ migrate = Migrate(app,db)
 # Models.
 #----------------------------------------------------------------------------#
 
-'''shows = db.Table('shows',
-db.Column('venue_id',db.Integer,db.ForeignKey('venue.id'),primary_key=True),
-db.Column('artist_id',db.Integer, db.ForeignKey('artist.id'),primary_key=True),
-db.Column('start_time',db.DateTime,primary_key=True))'''
-
 class Venue(db.Model):
   __tablename__ = 'venue'
 
@@ -71,8 +66,8 @@ class Artist(db.Model):
 class Show(db.Model):
   __tablename__ = 'show'
   id = db.Column(db.Integer, primary_key=True)
-  artist_id = db.Column(db.Integer, db.ForeignKey('artist.id'), nullable=False)
-  venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
+  artist_id = db.Column(db.Integer, db.ForeignKey('artist.id', ondelete='CASCADE'), nullable=False)
+  venue_id = db.Column(db.Integer, db.ForeignKey('venue.id', ondelete='CASCADE'), nullable=False)
   start_time = db.Column(db.DateTime, nullable=False)
 
   venue = db.relationship(Venue,backref='shows')
