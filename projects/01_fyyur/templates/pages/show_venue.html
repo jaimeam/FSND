@@ -4,8 +4,9 @@
 <div class="row">
 	<div class="col-sm-6">
 		<h1 class="monospace">
-			{{ venue.name }}
+			{{ venue.name }}	
 		</h1>
+		<button class="delete-button">Delete &cross;</button>
 		<p class="subtitle">
 			ID: {{ venue.id }}
 		</p>
@@ -74,6 +75,15 @@
 		{% endfor %}
 	</div>
 </section>
+<script>
+	const deletebutton = document.querySelector('.delete-button')
+	deletebutton.onclick = function(e) {
+		console.log('event',e);
+		fetch('/venues/' + {{ venue.id }}, {
+            method: 'DELETE'
+          })
+	}
+</script>
 
 {% endblock %}
 

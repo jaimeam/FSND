@@ -6,6 +6,7 @@
 		<h1 class="monospace">
 			{{ artist.name }}
 		</h1>
+		<button class="delete-button">Delete &cross;</button>
 		<p class="subtitle">
 			ID: {{ artist.id }}
 		</p>
@@ -71,6 +72,14 @@
 		{% endfor %}
 	</div>
 </section>
-
+<script>
+	const deletebutton = document.querySelector('.delete-button')
+	deletebutton.onclick = function(e) {
+		console.log('event',e);
+		fetch('/artists/' + {{ artist.id }}, {
+            method: 'DELETE'
+          })
+	}
+</script>
 {% endblock %}
 
