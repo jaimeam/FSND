@@ -15,6 +15,7 @@ from forms import *
 from flask_migrate import Migrate
 import sys
 import datetime
+from sqlalchemy.sql import func
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -117,17 +118,20 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for Hop should return "The Musical Hop".
-  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-  response={
-    "count": 1,
-    "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }
+  search_term=request.form.get('search_term')
+  venue_matches_query = Venue.query.filter(func.lower(Venue.name).contains(search_term.lower())).all()
+  
+  response = {}
+  response['count'] = len(venue_matches_query)
+  response['data'] = []
+
+  for venue_query in venue_matches_query:
+    venue_dict = {}
+    venue_dict['id'] = venue_query.id
+    venue_dict['name'] = venue_query.name
+    venue_dict['num_upcoming_shows'] = len(Show.query.filter(Show.venue_id==venue_dict['id'], Show.start_time>=datetime.datetime.today()).all())
+    response['data'].append(venue_dict)
+
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/venues/<int:venue_id>')
@@ -257,17 +261,19 @@ def delete_artist(artist_id):
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
-  # search for "band" should return "The Wild Sax Band".
-  response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
-  }
+  search_term=request.form.get('search_term')
+  artist_matches_query = Artist.query.filter(func.lower(Artist.name).contains(search_term.lower())).all()
+  
+  response = {}
+  response['count'] = len(artist_matches_query)
+  response['data'] = []
+
+  for artist_query in artist_matches_query:
+    artist_dict = {}
+    artist_dict['id'] = artist_query.id
+    artist_dict['name'] = artist_query.name
+    artist_dict['num_upcoming_shows'] = len(Show.query.filter(Show.artist_id==artist_dict['id'], Show.start_time>=datetime.datetime.today()).all())
+    response['data'].append(artist_dict)
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/artists/<int:artist_id>')
