@@ -16,26 +16,42 @@ def create_app(test_config=None):
   '''
   @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
   '''
+  cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
   '''
   @TODO: Use the after_request decorator to set Access-Control-Allow
   '''
 
-  '''
-  @TODO: 
-  Create an endpoint to handle GET requests 
-  for all available categories.
-  '''
+  # CORS Headers 
+  @app.after_request
+  def after_request(response):
+      response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,true')
+      response.headers.add('Access-Control-Allow-Methods', 'GET,PATCH,PUT,POST,DELETE,OPTIONS')
+      return response
 
+  @app.route('/categories', methods=['GET'])
+  def get_categories():
+    categories = [c.type for c in Category.query.all()]
+    return jsonify({
+      'success':True,
+      'categories':categories
+    })
 
-  '''
-  @TODO: 
-  Create an endpoint to handle GET requests for questions, 
-  including pagination (every 10 questions). 
-  This endpoint should return a list of questions, 
-  number of total questions, current category, categories. 
+  @app.route('/questions', methods=['GET'])
+  def get_questions():
+    page = request.args.get('page', 1, type=int)
+    start = (page - 1) * 10
+    end = start + 10
+    questions = [q.format() for q in Question.query.all()]
+    categories = [c.type for c in Category.query.all()]
+    return jsonify({
+      'success':True,
+      'questions':questions[start:end],
+      'total_questions':len(questions),
+      'categories':categories
+    })
 
-  TEST: At this point, when you start the application
+  '''TEST: At this point, when you start the application
   you should see questions and categories generated,
   ten questions per page and pagination at the bottom of the screen for three pages.
   Clicking on the page numbers should update the questions. 
