@@ -3,8 +3,9 @@ from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
+from sqlalchemy.sql import func
 
-from models import setup_db, Question, Category
+from models import db, setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
@@ -51,41 +52,53 @@ def create_app(test_config=None):
       'categories':categories
     })
 
-  '''TEST: At this point, when you start the application
-  you should see questions and categories generated,
-  ten questions per page and pagination at the bottom of the screen for three pages.
-  Clicking on the page numbers should update the questions. 
-  '''
+  @app.route('/questions/<question_id>', methods=['DELETE'])
+  def delete_question(question_id):
+      error = False
+      try:
+          Question.query.filter_by(id=question_id).delete()
+          db.session.commit()
+      except:
+          error = True
+          db.session.rollback()
+      finally:
+          db.session.close()
+      return jsonify({ 'success': True })
 
-  '''
-  @TODO: 
-  Create an endpoint to DELETE question using a question ID. 
+  @app.route('/questions', methods=['POST'])
+  def create_question():
+    error = False
+    try:
+      req_data = request.get_json()
+      new_question = Question(
+        question = req_data['question'],
+        answer = req_data['answer'],
+        difficulty = int(req_data['difficulty']),
+        category = int(req_data['category'])
+      )
+      db.session.add(new_question)
+      db.session.commit()
+    except:
+      error = True
+      db.session.rollback()
+    finally:
+      db.session.close()
 
-  TEST: When you click the trash icon next to a question, the question will be removed.
-  This removal will persist in the database and when you refresh the page. 
-  '''
+    return jsonify({ 'success': True })
 
-  '''
-  @TODO: 
-  Create an endpoint to POST a new question, 
-  which will require the question and answer text, 
-  category, and difficulty score.
+  @app.route('/questions/search', methods=['POST'])
+  def search_question():
+    search_term = request.get_json()['searchTerm']
+    question_matches_query = Question.query.filter(func.lower(Question.question).contains(search_term.lower())).all()
+    questions = [q.format() for q in question_matches_query]
+    categories = [c.type for c in Category.query.all()]
 
-  TEST: When you submit a question on the "Add" tab, 
-  the form will clear and the question will appear at the end of the last page
-  of the questions list in the "List" tab.  
-  '''
-
-  '''
-  @TODO: 
-  Create a POST endpoint to get questions based on a search term. 
-  It should return any questions for whom the search term 
-  is a substring of the question. 
-
-  TEST: Search by any phrase. The questions list will update to include 
-  only question that include that string within their question. 
-  Try using the word "title" to start. 
-  '''
+    return jsonify({
+      'success':True,
+      'questions':questions,
+      'total_questions':len(questions),
+      'currentCategory':categories[0]
+    })
 
   '''
   @TODO: 
