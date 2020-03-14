@@ -49,7 +49,7 @@ def create_app(test_config=None):
     questions = [q.format() for q in Question.query.all()]
     categories = [c.type for c in Category.query.all()]
 
-    if (len(questions) == 0) or (len(categories) == 0):
+    if (len(questions) == 0) or (len(questions)<start)or (len(categories) == 0):
       abort(404)
 
     return jsonify({
