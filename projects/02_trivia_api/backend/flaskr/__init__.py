@@ -67,7 +67,7 @@ def create_app(test_config=None):
           Question.query.filter_by(id=question_id).delete()
           db.session.commit()
           db.session.close()
-          return jsonify({ 'success': True })
+          return jsonify({ 'success': True})
       except:
           error = True
           db.session.rollback()
@@ -101,7 +101,11 @@ def create_app(test_config=None):
   # Search questions which contain search term as substring, case-insensitive, via POST
   @app.route('/questions/search', methods=['POST'])
   def search_question():
-    search_term = request.get_json()['searchTerm']
+    # Check that submitted values are correct
+    try:
+      search_term = request.get_json()['searchTerm']
+    except:
+      abort(422)
     question_matches_query = Question.query.filter(func.lower(Question.question).contains(search_term.lower())).all()
     questions = [q.format() for q in question_matches_query]
 
@@ -140,8 +144,8 @@ def create_app(test_config=None):
     except:
       abort(422)
 
-    # If quiz_category id = 0 take all categories
-    if int(quiz_category['id']) == 0:
+    # If quiz_category type = click take all categories
+    if quiz_category['type'] == 'click':
       questions_c = [q.format() for q in Question.query.all()]
     else:
       quiz_category['id'] = int(quiz_category['id'])+1

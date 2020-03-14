@@ -29,6 +29,14 @@ class TriviaTestCase(unittest.TestCase):
         """Executed after reach test"""
         pass
 
+    def test_get_categories(self):
+        res = self.client().get('/categories')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['categories'])
+
     def test_get_paginated_questions(self):
         res = self.client().get('/questions')
         data = json.loads(res.data)
@@ -66,7 +74,20 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-    
+
+    def test_404_post_wrong_question(self):
+        # Missing field "difficulty"
+        res = self.client().post('/questions', json={
+            'question': 'Test question',
+            'answer': 'Test answer',
+            'category':1
+        })
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data['success'], False)
+        self.assertTrue(data['message'],'Unprocessable')
+
     def test_search_question(self):
         res = self.client().post('/questions/search', json={
             'searchTerm': 'test',
@@ -77,6 +98,14 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertTrue(data['questions'])
         self.assertTrue(data['total_questions'])
+
+    def test_422_search_question_without_searchterm(self):
+        res = self.client().post('/questions/search', json={})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data['success'], False)
+        self.assertTrue(data['message'],'Unprocessable')
 
     def test_get_questions_by_category(self):
         res = self.client().get('categories/1/questions')
