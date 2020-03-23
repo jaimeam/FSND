@@ -1,1 +1,4 @@
 .venv
+backend/token.txt
+*.log
+*.db
