@@ -4,7 +4,6 @@ from sqlalchemy import exc
 import json
 from flask_cors import CORS
 from jose import jwt
-import logging
 
 from .database.models import db_drop_and_create_all, setup_db, Drink, db
 from .auth.auth import AuthError, requires_auth
@@ -14,8 +13,6 @@ setup_db(app)
 CORS(app)
 
 db_drop_and_create_all()
-
-logging.basicConfig(filename='test.log',level=logging.DEBUG)
 
 ## ROUTES
 @app.route('/drinks', methods=['GET'])
@@ -34,7 +31,6 @@ def show_drinks():
 def show_drinks_detail(jwt):
     try:
         drinks = [drink.long() for drink in Drink.query.all()]
-        logging.debug(drinks)
         return jsonify({
             'success':True,
             'drinks':drinks
@@ -47,12 +43,10 @@ def show_drinks_detail(jwt):
 def post_new_drink(jwt):
     try:
       req_data = request.get_json()
-      logging.debug(req_data)
       new_drink = Drink(
         title = req_data['title'],
         recipe = json.dumps(req_data['recipe'])
       )
-      logging.debug(new_drink)
       new_drink.insert()
       db.session.close()
       return jsonify({
@@ -64,17 +58,27 @@ def post_new_drink(jwt):
       db.session.close()
       abort(422)
 
-'''
-@TODO implement endpoint
-    PATCH /drinks/<id>
-        where <id> is the existing model id
-        it should respond with a 404 error if <id> is not found
-        it should update the corresponding row for <id>
-        it should require the 'patch:drinks' permission
-        it should contain the drink.long() data representation
-    returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
-        or appropriate status code indicating reason for failure
-'''
+@app.route('/drinks/<id>', methods=['PATCH'])
+@requires_auth('patch:drinks')
+def patch_drink(jwt,id):
+    try:
+      req_data = request.get_json()
+      drink = Drink.query.filter(Drink.id == id).one_or_none()
+      if drink == None:
+          abort(404)
+
+      drink.title = req_data['title']
+      drink.recipe = json.dumps(req_data['recipe'])
+      drink.update()
+      db.session.close()
+      return jsonify({
+          'success':True,
+          'drinks': drink.long()
+      })
+    except:
+      db.session.rollback()
+      db.session.close()
+      abort(422)
 
 
 '''
@@ -87,7 +91,24 @@ def post_new_drink(jwt):
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
-
+@app.route('/drinks/<id>', methods=['DELETE'])
+@requires_auth('delete:drinks')
+def delete_drink(jwt,id):
+    try:
+      req_data = request.get_json()
+      drink = Drink.query.filter(Drink.id == id).one_or_none()
+      if drink == None:
+          abort(404)
+      drink.delete()
+      db.session.close()
+      return jsonify({
+          'success':True,
+          'delete': id
+      })
+    except:
+      db.session.rollback()
+      db.session.close()
+      abort(422)
 
 ## Error Handling
 '''
